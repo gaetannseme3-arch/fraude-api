@@ -47,7 +47,11 @@ def predict():
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        return jsonify({
+            "error": repr(e),
+            "trace": traceback,format_exc()
+            }), 500
 
 
 if __name__ == "__main__":
