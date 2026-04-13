@@ -1,15 +1,19 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 import joblib
+import os
+import traceback
 
 app = Flask(__name__)
 
 model = None
 
+
 def load_model():
     global model
     if model is None:
-        model = joblib.load("model_fraude.pkl")
+        model_path = os.path.join(os.getcwd(), "model_fraude.pkl")
+        model = joblib.load(model_path)
     return model
 
 
@@ -39,19 +43,23 @@ def predict():
                 data[col] = 0
 
         df = pd.DataFrame([data])
+
         modele = load_model()
         prediction = modele.predict(df)
 
+        result = prediction[0]
+        if hasattr(result, "item"):
+            result = result.item()
+
         return jsonify({
-            "prediction": int(prediction[0])
+            "prediction": int(result)
         })
 
     except Exception as e:
-        import traceback
         return jsonify({
             "error": repr(e),
-            "trace": traceback,format_exc()
-            }), 500
+            "trace": traceback.format_exc()
+        }), 500
 
 
 if __name__ == "__main__":
