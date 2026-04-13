@@ -1,3 +1,23 @@
+from flask import Flask, request, jsonify
+import pandas as pd
+import joblib
+
+app = Flask(__name__)
+
+model = None
+
+def load_model():
+    global model
+    if model is None:
+        model = joblib.load("model_fraude.pkl")
+    return model
+
+
+@app.route("/")
+def home():
+    return "API fraude active"
+
+
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
@@ -6,7 +26,6 @@ def predict():
         if data is None:
             return jsonify({"error": "Aucune donnée JSON reçue"}), 400
 
-        # ⚠️ colonnes attendues par le modèle
         expected_columns = [
             "amount",
             "oldbalanceOrg",
@@ -15,13 +34,11 @@ def predict():
             "newbalanceDest"
         ]
 
-        # compléter les colonnes manquantes avec 0
         for col in expected_columns:
             if col not in data:
                 data[col] = 0
 
         df = pd.DataFrame([data])
-
         modele = load_model()
         prediction = modele.predict(df)
 
@@ -31,3 +48,7 @@ def predict():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
